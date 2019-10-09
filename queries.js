@@ -7,7 +7,7 @@ const pool = new Pool({
   port: 5432,
 })
 
-const getPractises = (request, response) => {
+const getPractises = (request, response, next) => {
   pool.query('SELECT * FROM practises ORDER BY id ASC', (error, results) => {
     if (error) {
       throw error
@@ -36,7 +36,6 @@ const createPractise = (request, response) => {
       throw error
     }
     
-    console.log(results.rows[0].id)
     response.status(201).send(`User added with ID: ${results.rows[0].id}`)
   })
 }
