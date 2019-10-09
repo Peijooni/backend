@@ -1,3 +1,4 @@
+const createError = require('http-errors');
 const Pool = require('pg').Pool
 const pool = new Pool({
   user: 'postgres',
@@ -10,29 +11,32 @@ const pool = new Pool({
 const getPractises = (request, response, next) => {
   pool.query('SELECT * FROM practises ORDER BY id ASC', (error, results) => {
     if (error) {
+      next(createError(500));
       throw error
     }
     response.status(200).json(results.rows)
   })
 }
 
-const getPractiseById = (request, response) => {
+const getPractiseById = (request, response, next) => {
   const id = parseInt(request.params.id)
 
   pool.query('SELECT * FROM practises WHERE id = $1', [id], (error, results) => {
     if (error) {
+      next(createError(500));
       throw error
     }
     response.status(200).json(results.rows)
   })
 }
 
-const createPractise = (request, response) => {
+const createPractise = (request, response, next) => {
   const { practise, time } = request.body
 
   pool.query('INSERT INTO practises (practise, time) VALUES ($1, $2) RETURNING id', [practise, time],
    (error, results) => {
     if (error) {
+      next(createError(500));
       throw error
     }
     
@@ -40,7 +44,7 @@ const createPractise = (request, response) => {
   })
 }
 
-const updatePractise = (request, response) => {
+const updatePractise = (request, response, next) => {
   const id = parseInt(request.params.id)
   const { practise, time } = request.body
 
@@ -49,6 +53,7 @@ const updatePractise = (request, response) => {
     [practise, time, id],
     (error, results) => {
       if (error) {
+        next(createError(500));
         throw error
       }
       response.status(200).send(`User modified with ID: ${id}`)
@@ -56,11 +61,12 @@ const updatePractise = (request, response) => {
   )
 }
 
-const deletePractise = (request, response) => {
+const deletePractise = (request, response, next) => {
   const id = parseInt(request.params.id)
 
   pool.query('DELETE FROM practises WHERE id = $1', [id], (error, results) => {
     if (error) {
+      next(createError(500));
       throw error
     }
     response.status(200).send(`User deleted with ID: ${id}`)

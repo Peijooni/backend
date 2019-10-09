@@ -1,29 +1,20 @@
 const express = require('express')
-const db = require('./queries')
 const app = express()
 const port = 3000
 const createError = require('http-errors');
+const logger = require('morgan');
 
+const indexRouter = require('./routes/CRUD');
+const CRUDoperationsRouter = require('./routes/index');
+
+//const router = express.Router();
+
+app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-    console.log(new Date().getTime());
-    next();
-    return;
-});
-
-app.get('/', (request, response) => {
-    response.json({ info: 'Node.js, Express, and Postgres API' })
-});
-
-app.get('/practises', db.getPractises);
-app.get('/practises/:id', db.getPractiseById);
-app.post('/practises', db.createPractise);
-app.put('/practises/:id', db.updatePractise);
-app.delete('/practises/:id', db.deletePractise);
-
-
+app.use('/', indexRouter);
+app.use('/', CRUDoperationsRouter);
 
 
 app.use((req, res, next) => {
@@ -55,3 +46,5 @@ app.use(function(req, res){
 app.listen(port, () => {
     console.log(`App running on port ${port}.`)
 });
+
+module.exports = app;
