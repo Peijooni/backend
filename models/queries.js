@@ -1,4 +1,6 @@
 const createError = require('http-errors');
+const { sanitizeBody, body, validationResult, param } = require('express-validator');
+
 const Pool = require('pg').Pool
 const pool = new Pool({
   user: 'postgres',
@@ -7,6 +9,7 @@ const pool = new Pool({
   password: 'admin',
   port: 5432,
 })
+
 
 const getPractises = (request, response, next) => {
   pool.query('SELECT * FROM practises ORDER BY id ASC', (error, results) => {
@@ -18,60 +21,118 @@ const getPractises = (request, response, next) => {
   })
 }
 
-const getPractiseById = (request, response, next) => {
-  const id = parseInt(request.params.id)
 
-  pool.query('SELECT * FROM practises WHERE id = $1', [id], (error, results) => {
-    if (error) {
-      next(createError(500));
-      throw error
+const getPractiseById = [
+  param('id', 'id does not exist').exists(),
+  param('id', 'too short id').isLength({ min: 1 }),
+  param('id', 'is not integer').isInt(),
+  (request, response, next) => {
+    const errors = validationResult(request);
+    if (!errors.isEmpty()) {
+      // There are errors. Render form again with sanitized values/errors messages.
+      response.json( { errors: errors.array() });
+      return;
     }
-    response.status(200).json(results.rows)
-  })
-}
+    const id = parseInt(request.params.id)
 
-const createPractise = (request, response, next) => {
-  const { practise, time } = request.body
+    pool.query('SELECT * FROM practises WHERE id = $1', [id], (error, results) => {
+      if (error) {
+        next(createError(500));
+        throw error
+      }
+      response.status(200).json(results.rows)
+    })
+  }
+];
 
-  pool.query('INSERT INTO practises (practise, time) VALUES ($1, $2) RETURNING id', [practise, time],
-   (error, results) => {
-    if (error) {
-      next(createError(500));
-      throw error
+
+const createPractise = [
+  
+  body('practise').exists(),
+  body('practise').isLength({ min: 5 }),
+
+  body('time', 'time field is required').exists(),
+  body('time', 'not in right date-format').isISO8601(),
+  
+  (request, response, next) => {
+    const errors = validationResult(request);
+    if (!errors.isEmpty()) {
+      // There are errors. Render form again with sanitized values/errors messages.
+      response.json( { errors: errors.array() });
+      return;
     }
-    
-    response.status(201).send(`User added with ID: ${results.rows[0].id}`)
-  })
-}
+    const { practise, time } = request.body
 
-const updatePractise = (request, response, next) => {
-  const id = parseInt(request.params.id)
-  const { practise, time } = request.body
-
-  pool.query(
-    'UPDATE practises SET practise = $1, time = $2 WHERE id = $3',
-    [practise, time, id],
+    pool.query('INSERT INTO practises (practise, time) VALUES ($1, $2) RETURNING id', [practise, time],
     (error, results) => {
       if (error) {
         next(createError(500));
         throw error
       }
-      response.status(200).send(`User modified with ID: ${id}`)
-    }
-  )
-}
+      
+      response.status(201).send(`User added with ID: ${results.rows[0].id}`)
+    })
+  }
+];
 
-const deletePractise = (request, response, next) => {
-  const id = parseInt(request.params.id)
+const updatePractise = [    
+  param('id', 'id does not exist').exists(),
+  param('id', 'too short id').isLength({ min: 1 }),
+  param('id', 'is not integer').isInt(),
 
-  pool.query('DELETE FROM practises WHERE id = $1', [id], (error, results) => {
-    if (error) {
-      next(createError(500));
-      throw error
+  body('practise').exists(),
+  body('practise').isLength({ min: 5 }),
+
+  body('time').exists(),
+  body('time').isISO8601(),
+  (request, response, next) => {
+    const errors = validationResult(request);
+    if (!errors.isEmpty()) {
+      // There are errors. Render form again with sanitized values/errors messages.
+      response.json( { errors: errors.array() });
+      return;
     }
-    response.status(200).send(`User deleted with ID: ${id}`)
-  })
-}
+
+    const id = parseInt(request.params.id)
+    const { practise, time } = request.body
+
+    pool.query(
+      'UPDATE practises SET practise = $1, time = $2 WHERE id = $3',
+      [practise, time, id],
+      (error, results) => {
+        if (error) {
+          next(createError(500));
+          throw error
+        }
+        response.status(200).send(`User modified with ID: ${id}`)
+      }
+    )
+  }
+];
+
+const deletePractise = [    
+  param('id', 'id does not exist').exists(),
+  param('id', 'too short id').isLength({ min: 1 }),
+  param('id', 'is not integer').isInt(),
+  
+  (request, response, next) => {
+    const errors = validationResult(request);
+    if (!errors.isEmpty()) {
+      // There are errors. Render form again with sanitized values/errors messages.
+      response.json( { errors: errors.array() });
+      return;
+    }
+    const id = parseInt(request.params.id)
+
+    pool.query('DELETE FROM practises WHERE id = $1', [id], (error, results) => {
+      if (error) {
+        next(createError(500));
+        throw error
+      }
+      response.status(200).send(`User deleted with ID: ${id}`)
+    })
+  }
+];
 
 module.exports = {
   getPractises,
