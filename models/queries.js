@@ -111,9 +111,10 @@ const updatePractise = [
           next(createError(500));
           throw error
         }
-        console.log(results);
-        response.status(200).send(`Tried to modify practise with ID: ${id}. 
-            Modified ${results.rowCount} practises`)
+        if(results.rows < 1) {
+          return response.status(202).send(`No practises found with provided id (${id})`);
+        } 
+        response.status(200).send(`Modified ${results.rowCount} practises with ID: ${id}.`)
       }
     )
   }
