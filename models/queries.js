@@ -26,6 +26,8 @@ const getPractiseById = [
   param('id', 'id does not exist').exists(),
   param('id', 'too short id').isLength({ min: 1 }),
   param('id', 'is not integer').isInt(),
+
+  sanitizeBody('id').escape(),
   (request, response, next) => {
     const errors = validationResult(request);
     if (!errors.isEmpty()) {
@@ -48,11 +50,13 @@ const getPractiseById = [
 
 const createPractise = [
   
-  body('practise').exists(),
-  body('practise').isLength({ min: 5 }),
+  body('practise', 'practise field is required').exists(),
+  body('practise', 'min length is 5').isLength({ min: 5 }),
 
   body('time', 'time field is required').exists(),
   body('time', 'not in right date-format').isISO8601(),
+
+  sanitizeBody('time').toDate(),
   
   (request, response, next) => {
     const errors = validationResult(request);
@@ -70,7 +74,7 @@ const createPractise = [
         throw error
       }
       
-      response.status(201).send(`User added with ID: ${results.rows[0].id}`)
+      response.status(201).send(`Practise added with ID: ${results.rows[0].id}`)
     })
   }
 ];
@@ -80,11 +84,14 @@ const updatePractise = [
   param('id', 'too short id').isLength({ min: 1 }),
   param('id', 'is not integer').isInt(),
 
-  body('practise').exists(),
-  body('practise').isLength({ min: 5 }),
+  body('practise', 'practise field is required').exists(),
+  body('practise', 'min length is 5').isLength({ min: 5 }),
 
-  body('time').exists(),
-  body('time').isISO8601(),
+  body('time', 'time field is required').exists(),
+  body('time', 'not in right date-format').isISO8601(),
+
+  sanitizeBody('time').toDate(),
+  sanitizeBody('id').escape(),
   (request, response, next) => {
     const errors = validationResult(request);
     if (!errors.isEmpty()) {
@@ -104,7 +111,9 @@ const updatePractise = [
           next(createError(500));
           throw error
         }
-        response.status(200).send(`User modified with ID: ${id}`)
+        console.log(results);
+        response.status(200).send(`Tried to modify practise with ID: ${id}. 
+            Modified ${results.rowCount} practises`)
       }
     )
   }
@@ -114,6 +123,8 @@ const deletePractise = [
   param('id', 'id does not exist').exists(),
   param('id', 'too short id').isLength({ min: 1 }),
   param('id', 'is not integer').isInt(),
+  
+  sanitizeBody('id').escape(),
   
   (request, response, next) => {
     const errors = validationResult(request);
@@ -129,7 +140,8 @@ const deletePractise = [
         next(createError(500));
         throw error
       }
-      response.status(200).send(`User deleted with ID: ${id}`)
+      console.log(results);
+      response.status(200).send(`Tried to delete practise with ID: ${id}. Deleted ${results.rowCount} rows.`)
     })
   }
 ];
