@@ -142,7 +142,6 @@ const deletePractise = [
         next(createError(500));
         throw error
       }
-      console.log(results);
       response.status(200).send(`Tried to delete practise with ID: ${id}. Deleted ${results.rowCount} rows.`)
     })
   }
