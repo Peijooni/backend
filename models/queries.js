@@ -75,7 +75,7 @@ const createPractise = [
         throw error
       }
       
-      response.status(201).send(`Practise added with ID: ${results.rows[0].id}`)
+      response.status(201).json({id:results.rows[0].id})
     })
   }
 ];

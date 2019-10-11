@@ -3,6 +3,7 @@ const app = express()
 const port = 3000
 const createError = require('http-errors');
 const logger = require('morgan');
+var cors = require('cors')
 
 const indexRouter = require('./routes/CRUD');
 const CRUDoperationsRouter = require('./routes/index');
@@ -12,6 +13,8 @@ const CRUDoperationsRouter = require('./routes/index');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+cors({credentials: true, origin: true})
+app.use(cors);
 
 app.use('/', indexRouter);
 app.use('/', CRUDoperationsRouter);
