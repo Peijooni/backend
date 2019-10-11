@@ -50,13 +50,13 @@ const getPractiseById = [
 
 const createPractise = [
   
-  body('practise', 'practise field is required').exists(),
-  body('practise', 'min length is 5').isLength({ min: 5 }),
+  body('description', 'practise field is required').exists(),
+  body('description', 'min length is 5').isLength({ min: 5 }),
 
-  body('time', 'time field is required').exists(),
-  body('time', 'not in right date-format').isISO8601(),
+  body('date', 'time field is required').exists(),
+  body('date', 'not in right date-format').isISO8601(),
 
-  sanitizeBody('time').toDate(),
+  sanitizeBody('date').toDate(),
   
   (request, response, next) => {
     const errors = validationResult(request);
@@ -65,9 +65,10 @@ const createPractise = [
       response.json( { errors: errors.array() });
       return;
     }
-    const { practise, time } = request.body
+    const { description, date } = request.body
 
-    pool.query('INSERT INTO practises (practise, time) VALUES ($1, $2) RETURNING id', [practise, time],
+    pool.query('INSERT INTO practises (description, date) VALUES ($1, $2) RETURNING id',
+     [description, date],
     (error, results) => {
       if (error) {
         next(createError(500));
@@ -84,13 +85,13 @@ const updatePractise = [
   param('id', 'too short id').isLength({ min: 1 }),
   param('id', 'is not integer').isInt(),
 
-  body('practise', 'practise field is required').exists(),
-  body('practise', 'min length is 5').isLength({ min: 5 }),
+  body('description', 'practise field is required').exists(),
+  body('description', 'min length is 5').isLength({ min: 5 }),
 
-  body('time', 'time field is required').exists(),
-  body('time', 'not in right date-format').isISO8601(),
+  body('date', 'time field is required').exists(),
+  body('date', 'not in right date-format').isISO8601(),
 
-  sanitizeBody('time').toDate(),
+  sanitizeBody('date').toDate(),
   sanitizeBody('id').escape(),
   (request, response, next) => {
     const errors = validationResult(request);
@@ -101,11 +102,11 @@ const updatePractise = [
     }
 
     const id = parseInt(request.params.id)
-    const { practise, time } = request.body
+    const { description, date } = request.body
 
     pool.query(
-      'UPDATE practises SET practise = $1, time = $2 WHERE id = $3',
-      [practise, time, id],
+      'UPDATE practises SET description = $1, date = $2 WHERE id = $3',
+      [description, date, id],
       (error, results) => {
         if (error) {
           next(createError(500));
@@ -158,7 +159,7 @@ module.exports = {
 /*
 CREATE TABLE practises (
   ID SERIAL PRIMARY KEY,
-  time TIMESTAMP,
-  practise TEXT
+  date TIMESTAMP,
+  description TEXT
 );
 */
