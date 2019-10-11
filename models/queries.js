@@ -50,6 +50,8 @@ const getPractiseById = [
 
 const createPractise = [
   
+  body('title', 'practise field is required').exists(),
+
   body('description', 'practise field is required').exists(),
   body('description', 'min length is 5').isLength({ min: 5 }),
 
@@ -65,10 +67,10 @@ const createPractise = [
       response.json( { errors: errors.array() });
       return;
     }
-    const { description, date } = request.body
+    const { description, date, title } = request.body
 
-    pool.query('INSERT INTO practises (description, date) VALUES ($1, $2) RETURNING id',
-     [description, date],
+    pool.query('INSERT INTO practises (description, date, title) VALUES ($1, $2, $3) RETURNING id',
+     [description, date, title],
     (error, results) => {
       if (error) {
         next(createError(500));
@@ -84,6 +86,8 @@ const updatePractise = [
   param('id', 'id does not exist').exists(),
   param('id', 'too short id').isLength({ min: 1 }),
   param('id', 'is not integer').isInt(),
+
+  body('title', 'practise field is required').exists(),
 
   body('description', 'practise field is required').exists(),
   body('description', 'min length is 5').isLength({ min: 5 }),
@@ -102,11 +106,11 @@ const updatePractise = [
     }
 
     const id = parseInt(request.params.id)
-    const { description, date } = request.body
+    const { description, date, title } = request.body
 
     pool.query(
-      'UPDATE practises SET description = $1, date = $2 WHERE id = $3',
-      [description, date, id],
+      'UPDATE practises SET description = $1, date = $2, title = $3 WHERE id = $4',
+      [description, date, title, id],
       (error, results) => {
         if (error) {
           next(createError(500));
@@ -160,6 +164,7 @@ module.exports = {
 CREATE TABLE practises (
   ID SERIAL PRIMARY KEY,
   date TIMESTAMP,
+  title varchar,
   description TEXT
 );
 */

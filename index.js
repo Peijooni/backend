@@ -14,7 +14,8 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 cors({credentials: true, origin: true})
-app.use(cors);
+app.use(cors());
+//app.options('localhost', cors());
 
 app.use('/', indexRouter);
 app.use('/', CRUDoperationsRouter);
