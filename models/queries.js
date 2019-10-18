@@ -12,7 +12,7 @@ const pool = new Pool({
 
 
 const getPractises = (request, response, next) => {
-  pool.query('SELECT * FROM practises ORDER BY id ASC', (error, results) => {
+  pool.query('SELECT id, SUBSTRING(date::varchar FROM 1 FOR 10) as date, title, description FROM practises ORDER BY id ASC', (error, results) => {
     if (error) {
       next(createError(500));
       throw error
@@ -163,7 +163,7 @@ module.exports = {
 /*
 CREATE TABLE practises (
   ID SERIAL PRIMARY KEY,
-  date TIMESTAMP,
+  date DATE,
   title varchar,
   description TEXT
 );
