@@ -116,7 +116,6 @@ const updatePractise = [
           next(createError(500));
           throw error
         }
-        // Tässä on ongelma!!
         if(results.rowCount < 1) {
           return response.status(202).send(`No practises found with provided id (${id})`);
         } 
@@ -142,12 +141,15 @@ const deletePractise = [
     }
     const id = parseInt(request.params.id)
 
-    pool.query('DELETE FROM practises WHERE id = $1', [id], (error, results) => {
+    pool.query('DELETE FROM practises WHERE id = $1  RETURNING id', [id], (error, results) => {
       if (error) {
         next(createError(500));
         throw error
       }
-      response.status(200).send(`Tried to delete practise with ID: ${id}. Deleted ${results.rowCount} rows.`)
+      if(Array.isArray(results.rows) && results.rows.length) {
+        return response.status(200).json({id: results.rows[0].id});
+      }      
+      response.status(404).json({error: `no practises with id: ${id}`});
     })
   }
 ];
