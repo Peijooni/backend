@@ -1,4 +1,5 @@
 const express = require('express')
+const session = require('express-session');
 const app = express()
 const port = 3000
 const createError = require('http-errors');
@@ -15,7 +16,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 cors({credentials: true, origin: true})
 app.use(cors());
-//app.options('localhost', cors());
+app.use(session({resave: true, saveUninitialized: true, 
+    secret: 'XCR3rsasa%RDHHH', cookie: { maxAge: 1000 * 60 * 30 }}));  // 10 * 1000 is 10 sec
 
 app.use('/', indexRouter);
 app.use('/', CRUDoperationsRouter);
