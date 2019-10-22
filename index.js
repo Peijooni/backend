@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 cors({credentials: true, origin: true})
 app.use(cors());
 app.use(session({resave: true, saveUninitialized: true, 
-    secret: 'XCR3rsasa%RDHHH', cookie: { maxAge: 1000 * 60 * 30 }}));  // 10 * 1000 is 10 sec
+    secret: 'XCR3rsasa%RDHHHAA', cookie: { maxAge: 1000 * 60 * 30 }}));  // 10 * 1000 is 10 sec
 
 app.use('/', indexRouter);
 app.use('/', CRUDoperationsRouter);
