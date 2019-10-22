@@ -1,5 +1,5 @@
 # Backend
-This is the backen part of the project. The UI part done in Angular 8 can be found here: https://github.com/Peijooni/angularNGXS The UI done in React can be found here:
+This is the backend part of the project. The UI part done in Angular 8 can be found here: https://github.com/Peijooni/angularNGXS The UI done in React can be found here: xxxxxxx
 
 ## Used technologies and included packages in backend
 * nodeJS
