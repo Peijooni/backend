@@ -1,5 +1,6 @@
 const createError = require('http-errors');
 const { sanitizeBody, body, validationResult, param } = require('express-validator');
+const fetch = require("node-fetch");
 
 const Pool = require('pg').Pool
 const pool = new Pool({
@@ -10,15 +11,49 @@ const pool = new Pool({
   port: 5432,
 })
 
+async function isValidAuthentication(query, session) {
+  if(session.token === undefined) {
+    const token = query.token;
+    let response = await fetch('http://api.github.com/user', {
+			headers: {
+				// Include the token in the Authorization header
+				Authorization: 'token ' + token
+			}
+    });
+    response = await response.json();
+    if(response.id !== undefined) {
+      session.token = "OK"
+      return true;
+    } else {
+      session.token = undefined;
+      return false;
+    }    
+  }
+  else if(session.token === "OK") {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
 
-const getPractises = (request, response, next) => {
-  pool.query('SELECT id, SUBSTRING(date::varchar FROM 1 FOR 10) as date, title, description FROM practises ORDER BY date DESC', (error, results) => {
-    if (error) {
-      next(createError(500));
-      throw error
+getPractises = (request, response, next) => {
+  isValidAuthentication(request.query, request.session).then(authorized => {
+    if(authorized) {
+      pool.query('SELECT id, SUBSTRING(date::varchar FROM 1 FOR 10) as date, title, description FROM practises ORDER BY date DESC',
+       (error, results) => {
+        if (error) {
+          next(createError(500));
+          throw error
+        }
+        return response.status(200).json(results.rows)
+      })
     }
-    response.status(200).json(results.rows)
+    else {
+      return response.status(401).json({error: "not authorized"});
+    }
   })
+  
 }
 
 
@@ -29,21 +64,30 @@ const getPractiseById = [
 
   sanitizeBody('id').escape(),
   (request, response, next) => {
-    const errors = validationResult(request);
-    if (!errors.isEmpty()) {
-      // There are errors. Render form again with sanitized values/errors messages.
-      response.json( { errors: errors.array() });
-      return;
-    }
-    const id = parseInt(request.params.id)
-
-    pool.query('SELECT * FROM practises WHERE id = $1', [id], (error, results) => {
-      if (error) {
-        next(createError(500));
-        throw error
+    isValidAuthentication(request.query, request.session).then(authorized => {
+      if(authorized) {
+        const errors = validationResult(request);
+        if (!errors.isEmpty()) {
+          // There are errors. Render form again with sanitized values/errors messages.
+          response.json( { errors: errors.array() });
+          return;
+        }
+    
+        const id = parseInt(request.params.id)
+        pool.query('SELECT * FROM practises WHERE id = $1', [id], (error, results) => {
+          if (error) {
+            next(createError(500));
+            throw error
+          }
+          if(results.rowCount < 1) {
+            return response.status(404).json( {error:`No practises found with provided id (${id})`} );
+          } 
+          response.status(200).json(results.rows)
+        })
+      } else {
+        return response.status(401).json({error: "not authorized"});
       }
-      response.status(200).json(results.rows)
-    })
+    })      
   }
 ];
 
@@ -61,23 +105,29 @@ const createPractise = [
   sanitizeBody('date').toDate(),
   
   (request, response, next) => {
-    const errors = validationResult(request);
-    if (!errors.isEmpty()) {
-      // There are errors. Render form again with sanitized values/errors messages.
-      response.json( { errors: errors.array() });
-      return;
-    }
-    const { description, date, title } = request.body
-
-    pool.query('INSERT INTO practises (description, date, title) VALUES ($1, $2, $3) RETURNING id',
-     [description, date, title],
-    (error, results) => {
-      if (error) {
-        next(createError(500));
-        throw error
+    isValidAuthentication(request.query, request.session).then(authorized => {
+      if(authorized) {
+        const errors = validationResult(request);
+        if (!errors.isEmpty()) {
+          // There are errors. Render form again with sanitized values/errors messages.
+          response.json( { errors: errors.array() });
+          return;
+        }
+    
+        const { description, date, title } = request.body
+        pool.query('INSERT INTO practises (description, date, title) VALUES ($1, $2, $3) RETURNING id',
+        [description, date, title],
+        (error, results) => {
+          if (error) {
+            next(createError(500));
+            throw error
+          }        
+          response.status(201).json({id:results.rows[0].id})
+        })
+      } else {
+        return response.status(401).json({error: "not authorized"});
       }
-      
-      response.status(201).json({id:results.rows[0].id})
+    
     })
   }
 ];
@@ -98,30 +148,36 @@ const updatePractise = [
   sanitizeBody('date').toDate(),
   sanitizeBody('id').escape(),
   (request, response, next) => {
-    const errors = validationResult(request);
-    if (!errors.isEmpty()) {
-      // There are errors. Render form again with sanitized values/errors messages.
-      response.json( { errors: errors.array() });
-      return;
-    }
-
-    const id = parseInt(request.params.id)
-    const { description, date, title } = request.body
-
-    pool.query(
-      'UPDATE practises SET description = $1, date = $2, title = $3 WHERE id = $4',
-      [description, date, title, id],
-      (error, results) => {
-        if (error) {
-          next(createError(500));
-          throw error
+    isValidAuthentication(request.query, request.session).then(authorized => {
+      if(authorized) {
+        const errors = validationResult(request);
+        if (!errors.isEmpty()) {
+          // There are errors. Render form again with sanitized values/errors messages.
+          response.json( { errors: errors.array() });
+          return;
         }
-        if(results.rowCount < 1) {
-          return response.status(404).json( {error:`No practises found with provided id (${id})`} );
-        } 
-        response.status(200).json( { id: id} )
-      }
-    )
+
+        const id = parseInt(request.params.id)
+        const { description, date, title } = request.body
+
+        pool.query(
+          'UPDATE practises SET description = $1, date = $2, title = $3 WHERE id = $4',
+          [description, date, title, id],
+          (error, results) => {
+            if (error) {
+              next(createError(500));
+              throw error
+            }
+            if(results.rowCount < 1) {
+              return response.status(404).json( {error:`No practises found with provided id (${id})`} );
+            } 
+            response.status(200).json( { id: id} )
+          }
+        )
+      } else {
+        return response.status(401).json({error: "not authorized"});
+      }    
+    })
   }
 ];
 
@@ -133,23 +189,28 @@ const deletePractise = [
   sanitizeBody('id').escape(),
   
   (request, response, next) => {
-    const errors = validationResult(request);
-    if (!errors.isEmpty()) {
-      // There are errors. Render form again with sanitized values/errors messages.
-      response.json( { errors: errors.array() });
-      return;
-    }
-    const id = parseInt(request.params.id)
-
-    pool.query('DELETE FROM practises WHERE id = $1  RETURNING id', [id], (error, results) => {
-      if (error) {
-        next(createError(500));
-        throw error
-      }
-      if(Array.isArray(results.rows) && results.rows.length) {
-        return response.status(200).json({id: results.rows[0].id});
-      }      
-      response.status(404).json({error: `no practises with id: ${id}`});
+    isValidAuthentication(request.query, request.session).then(authorized => {
+      if(authorized) {
+        const errors = validationResult(request);
+        if (!errors.isEmpty()) {
+          // There are errors. Render form again with sanitized values/errors messages.
+          response.json( { errors: errors.array() });
+          return;
+        }
+        const id = parseInt(request.params.id)
+        pool.query('DELETE FROM practises WHERE id = $1  RETURNING id', [id], (error, results) => {
+          if (error) {
+            next(createError(500));
+            throw error
+          }
+          if(Array.isArray(results.rows) && results.rows.length) {
+            return response.status(200).json({id: results.rows[0].id});
+          }      
+          response.status(404).json({error: `no practises with id: ${id}`});
+        })
+      } else {
+        return response.status(401).json({error: "not authorized"});
+      }    
     })
   }
 ];
