@@ -198,7 +198,6 @@ const deletePractise = [
           return;
         }
         const id = parseInt(request.params.id)
-
         pool.query('DELETE FROM practises WHERE id = $1  RETURNING id', [id], (error, results) => {
           if (error) {
             next(createError(500));
