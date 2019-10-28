@@ -2,14 +2,21 @@ const express = require('express')
 const session = require('express-session');
 const app = express()
 const port = 3000
+const httpsPort = 8443;
 const createError = require('http-errors');
 const logger = require('morgan');
-var cors = require('cors')
+const cors = require('cors')
+const fs = require('fs');
 
 const indexRouter = require('./routes/CRUD');
 const CRUDoperationsRouter = require('./routes/index');
 
 //const router = express.Router();
+
+const https = require('https');
+const privateKey  = fs.readFileSync('./certs/localhost.key', 'utf8');
+const certificate = fs.readFileSync('./certs/localhost.crt', 'utf8');
+const credentials = {key: privateKey, cert: certificate};
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -48,9 +55,17 @@ app.use(function(req, res){
   });
 */
 
+const httpsServer = https.createServer(credentials, app);
 
+/*
 app.listen(port, () => {
     console.log(`App running on port ${port}.`)
+});
+*/
+
+httpsServer.listen(httpsPort, () => {
+    console.log(`App running on port ${httpsPort}.`)
+
 });
 
 module.exports = app;
