@@ -80,8 +80,8 @@ const userExists = [
 
 const createUser = [
   
-  body('userId', 'userId field is required').exists(),
-  body('userId', 'min length is 10').isLength({ min: 40 }),
+  param('token', 'token does not exist').exists(),
+  param('token', 'token is too short').isLength({ min: 40 }),
   
   (request, response, next) => {
     isValidAuthentication(request.query, request.session).then(authorized => {
