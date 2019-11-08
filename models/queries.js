@@ -156,7 +156,7 @@ const getPractiseById = [
         const userInfo = getUserIdinformation(request.query.token);
         userInfo.then(info => {
           const id = parseInt(request.params.id)
-          pool.query('SELECT * FROM practises WHERE id = $1 AND user_id = $2', 
+          pool.query('SELECT id, SUBSTRING(date::varchar FROM 1 FOR 10) as date, title, description FROM practises WHERE id = $1 AND user_id = $2', 
           [id, info.id], (error, results) => {
             if (error) {
               next(createError(500));
@@ -164,7 +164,7 @@ const getPractiseById = [
             }
             if(results.rowCount < 1) {
               return response.status(404).json( {error:`No practises found with provided id (${id})`} );
-            } 
+            }
             response.status(200).json(results.rows)
           })
         })

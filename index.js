@@ -21,7 +21,7 @@ const credentials = {key: privateKey, cert: certificate};
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// cors({credentials: true, origin: true})
+//cors({credentials: true, origin: true})
 app.use(cors());
 app.use(session({resave: true, saveUninitialized: true, 
     secret: 'XCR3rsasa%RDHHHAA', cookie: { maxAge: 1000 * 60 * 30 }}));  // 10 * 1000 is 10 sec
@@ -63,9 +63,11 @@ app.listen(port, () => {
 });
 */
 
+
 httpsServer.listen(httpsPort, () => {
     console.log(`App running on port ${httpsPort}.`)
 
 });
+
 
 module.exports = app;
