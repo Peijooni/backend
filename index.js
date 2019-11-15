@@ -5,7 +5,7 @@ const port = 3000
 const httpsPort = 8443;
 const createError = require('http-errors');
 const logger = require('morgan');
-const cors = require('cors')
+//const cors = require('cors')
 const fs = require('fs');
 
 const indexRouter = require('./routes/CRUD');
@@ -21,10 +21,19 @@ const credentials = {key: privateKey, cert: certificate};
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-//cors({credentials: true, origin: true})
-app.use(cors());
-app.use(session({resave: true, saveUninitialized: true, 
+//cors({credentials: true, origin: 'http://localhost:4200', methods: "GET,HEAD,PUT,PATCH,POST,DELETE, OPTIONS"}) // origin: true, 
+//app.use(cors());
+app.use(session({resave: false, saveUninitialized: true, 
     secret: 'XCR3rsasa%RDHHHAA', cookie: { maxAge: 1000 * 60 * 30 }}));  // 10 * 1000 is 10 sec
+
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "http://localhost:4200");
+    res.header("Access-Control-Allow-Credentials", true);
+    res.header("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+
 
 app.use('/', indexRouter);
 app.use('/', CRUDoperationsRouter);
