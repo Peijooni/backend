@@ -5,6 +5,7 @@ const port = 3000
 const httpsPort = 8443;
 const createError = require('http-errors');
 const logger = require('morgan');
+const axios = require('axios');
 //const cors = require('cors')
 const fs = require('fs');
 
@@ -37,6 +38,12 @@ app.use(function(req, res, next) {
 
 app.use('/', indexRouter);
 app.use('/', CRUDoperationsRouter);
+
+// proxy for OAuth
+app.post('/oauth', async (req, res) => {
+    let response = await axios.post('https://github.com/login/oauth/access_token', req.body);
+    res.json(JSON.stringify(response.data))
+})
 
 
 app.use((req, res, next) => {
